@@ -42,7 +42,7 @@
 //!
 //! For manual execution control check out [crossterm::queue](../macro.queue.html).
 
-use std::fmt;
+use core::fmt;
 
 use crate::{csi, impl_display, Command};
 

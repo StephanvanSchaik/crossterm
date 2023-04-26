@@ -1,10 +1,10 @@
-use std::{
+use core::{
     convert::{AsRef, TryFrom},
     str::FromStr,
 };
 
 #[cfg(feature = "serde")]
-use std::fmt;
+use core::fmt;
 
 use crate::style::parse_next_u8;
 

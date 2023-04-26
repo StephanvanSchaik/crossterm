@@ -1,4 +1,4 @@
-use std::time::Duration;
+use core::time::Duration;
 
 #[cfg(feature = "event-stream")]
 use super::sys::Waker;

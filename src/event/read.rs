@@ -1,4 +1,7 @@
-use std::{collections::vec_deque::VecDeque, io, time::Duration};
+use alloc::{boxed::Box, collections::VecDeque, vec::Vec};
+use core::time::Duration;
+
+use std::io;
 
 #[cfg(unix)]
 use crate::event::source::unix::UnixInternalEventSource;

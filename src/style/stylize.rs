@@ -1,4 +1,5 @@
-use std::fmt::Display;
+use alloc::string::String;
+use core::fmt::Display;
 
 use super::{style, Attribute, Color, ContentStyle, StyledContent};
 

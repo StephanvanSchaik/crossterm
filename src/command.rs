@@ -1,4 +1,4 @@
-use std::fmt;
+use core::fmt;
 use std::io::{self, Write};
 
 use crate::terminal::{BeginSynchronizedUpdate, EndSynchronizedUpdate};

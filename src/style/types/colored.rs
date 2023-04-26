@@ -1,4 +1,4 @@
-use std::fmt::{self, Formatter};
+use core::fmt::{self, Formatter};
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};

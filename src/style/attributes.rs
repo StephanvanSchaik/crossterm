@@ -1,4 +1,4 @@
-use std::ops::{BitAnd, BitOr, BitXor};
+use core::ops::{BitAnd, BitOr, BitXor};
 
 use crate::style::Attribute;
 

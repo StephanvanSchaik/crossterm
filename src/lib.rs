@@ -230,6 +230,7 @@
 //! [stderr]: https://doc.rust-lang.org/std/io/fn.stderr.html
 //! [flush]: https://doc.rust-lang.org/std/io/trait.Write.html#tymethod.flush
 
+extern crate alloc;
 extern crate self as crossterm;
 
 pub use crate::command::{Command, ExecutableCommand, QueueableCommand, SynchronizedUpdate};

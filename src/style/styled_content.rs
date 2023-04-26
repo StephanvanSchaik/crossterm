@@ -1,6 +1,6 @@
 //! This module contains the logic to style some content.
 
-use std::fmt::{self, Display, Formatter};
+use core::fmt::{self, Display, Formatter};
 
 use super::{ContentStyle, PrintStyledContent};
 

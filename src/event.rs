@@ -99,12 +99,13 @@ use crate::event::{
     timeout::PollTimeout,
 };
 use crate::{csi, Command, Error};
+use alloc::string::String;
+use core::fmt;
+use core::time::Duration;
 use parking_lot::{MappedMutexGuard, Mutex, MutexGuard};
-use std::fmt;
-use std::time::Duration;
 
 use bitflags::bitflags;
-use std::hash::{Hash, Hasher};
+use core::hash::{Hash, Hasher};
 
 /// Static instance of `InternalEventReader`.
 /// This needs to be static because there can be one event reader.

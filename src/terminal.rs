@@ -83,7 +83,7 @@
 //!
 //! For manual execution control check out [crossterm::queue](../macro.queue.html).
 
-use std::fmt;
+use core::fmt;
 
 #[cfg(windows)]
 use crossterm_winapi::{ConsoleMode, Handle, ScreenBuffer};

@@ -1,4 +1,5 @@
-use std::time::{Duration, Instant};
+use core::time::Duration;
+use std::time::Instant;
 
 /// Keeps track of the elapsed time since the moment the polling started.
 #[derive(Debug, Clone)]

@@ -111,10 +111,9 @@
 //! );
 //! ```
 
-use std::{
-    env,
-    fmt::{self, Display},
-};
+use alloc::string::String;
+use core::fmt::{self, Display};
+use std::env;
 
 use crate::command::execute_fmt;
 use crate::{csi, impl_display, Command};
