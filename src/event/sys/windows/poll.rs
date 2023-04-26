@@ -10,6 +10,8 @@ use winapi::{
     },
 };
 
+use crate::Error;
+
 #[cfg(feature = "event-stream")]
 pub(crate) use super::waker::Waker;
 
@@ -26,7 +28,7 @@ impl WinApiPoll {
     }
 
     #[cfg(feature = "event-stream")]
-    pub(crate) fn new() -> std::io::Result<WinApiPoll> {
+    pub(crate) fn new() -> Result<WinApiPoll, Error> {
         Ok(WinApiPoll {
             waker: Waker::new()?,
         })
@@ -34,7 +36,7 @@ impl WinApiPoll {
 }
 
 impl WinApiPoll {
-    pub fn poll(&mut self, timeout: Option<Duration>) -> std::io::Result<Option<bool>> {
+    pub fn poll(&mut self, timeout: Option<Duration>) -> Result<Option<bool>, Error> {
         let dw_millis = if let Some(duration) = timeout {
             duration.as_millis() as u32
         } else {
@@ -62,20 +64,20 @@ impl WinApiPoll {
             output if output == WAIT_OBJECT_0 + 1 => {
                 // semaphore handle triggered
                 let _ = self.waker.reset();
-                Err(io::Error::new(
+                Err(Error::Io(io::Error::new(
                     io::ErrorKind::Interrupted,
                     "Poll operation was woken up by `Waker::wake`",
-                ))
+                )))
             }
             WAIT_TIMEOUT | WAIT_ABANDONED_0 => {
                 // timeout elapsed
                 Ok(None)
             }
-            WAIT_FAILED => Err(io::Error::last_os_error()),
-            _ => Err(io::Error::new(
+            WAIT_FAILED => Err(Error::Io(io::Error::last_os_error())),
+            _ => Err(Error::Io(io::Error::new(
                 io::ErrorKind::Other,
                 "WaitForMultipleObjects returned unexpected result.",
-            )),
+            ))),
         }
     }
 

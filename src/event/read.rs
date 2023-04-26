@@ -7,6 +7,7 @@ use crate::event::source::windows::WindowsEventSource;
 #[cfg(feature = "event-stream")]
 use crate::event::sys::Waker;
 use crate::event::{filter::Filter, source::EventSource, timeout::PollTimeout, InternalEvent};
+use crate::Error;
 
 /// Can be used to read `InternalEvent`s.
 pub(crate) struct InternalEventReader {
@@ -39,7 +40,7 @@ impl InternalEventReader {
         self.source.as_ref().expect("reader source not set").waker()
     }
 
-    pub(crate) fn poll<F>(&mut self, timeout: Option<Duration>, filter: &F) -> io::Result<bool>
+    pub(crate) fn poll<F>(&mut self, timeout: Option<Duration>, filter: &F) -> Result<bool, Error>
     where
         F: Filter,
     {
@@ -52,10 +53,7 @@ impl InternalEventReader {
         let event_source = match self.source.as_mut() {
             Some(source) => source,
             None => {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    "Failed to initialize input reader",
-                ))
+                return Err(Error::InputReader);
             }
         };
 
@@ -73,11 +71,14 @@ impl InternalEventReader {
                     }
                 }
                 Err(e) => {
-                    if e.kind() == io::ErrorKind::Interrupted {
-                        return Ok(false);
+                    match e {
+                        Error::Io(e) if e.kind() == io::ErrorKind::Interrupted => {
+                            return Ok(false);
+                        }
+                        _ => (),
                     }
 
-                    return Err(e);
+                    return Err(Error::from(e));
                 }
             };
 
@@ -94,7 +95,7 @@ impl InternalEventReader {
         }
     }
 
-    pub(crate) fn read<F>(&mut self, filter: &F) -> io::Result<InternalEvent>
+    pub(crate) fn read<F>(&mut self, filter: &F) -> Result<InternalEvent, Error>
     where
         F: Filter,
     {
@@ -127,7 +128,7 @@ impl InternalEventReader {
 
 #[cfg(test)]
 mod tests {
-    use std::io;
+    use crate::Error;
     use std::{collections::VecDeque, time::Duration};
 
     #[cfg(unix)]
@@ -315,12 +316,11 @@ mod tests {
             skipped_events: Vec::with_capacity(32),
         };
 
-        assert_eq!(
+        matches!(
             reader
                 .poll(Some(Duration::from_secs(0)), &InternalEventFilter)
-                .err()
-                .map(|e| format!("{:?}", &e.kind())),
-            Some(format!("{:?}", io::ErrorKind::Other))
+                .err(),
+            Some(Error::Test)
         );
     }
 
@@ -332,13 +332,7 @@ mod tests {
             skipped_events: Vec::with_capacity(32),
         };
 
-        assert_eq!(
-            reader
-                .read(&InternalEventFilter)
-                .err()
-                .map(|e| format!("{:?}", &e.kind())),
-            Some(format!("{:?}", io::ErrorKind::Other))
-        );
+        matches!(reader.read(&InternalEventFilter).err(), Some(Error::Test));
     }
 
     #[test]
@@ -380,14 +374,14 @@ mod tests {
     #[derive(Default)]
     struct FakeSource {
         events: VecDeque<InternalEvent>,
-        error: Option<io::Error>,
+        error: Option<Error>,
     }
 
     impl FakeSource {
         fn new(events: &[InternalEvent]) -> FakeSource {
             FakeSource {
                 events: events.to_vec().into(),
-                error: Some(io::Error::new(io::ErrorKind::Other, "")),
+                error: Some(Error::Test),
             }
         }
 
@@ -400,7 +394,7 @@ mod tests {
     }
 
     impl EventSource for FakeSource {
-        fn try_read(&mut self, _timeout: Option<Duration>) -> io::Result<Option<InternalEvent>> {
+        fn try_read(&mut self, _timeout: Option<Duration>) -> Result<Option<InternalEvent>, Error> {
             // Return error if set in case there's just one remaining event
             if self.events.len() == 1 {
                 if let Some(error) = self.error.take() {

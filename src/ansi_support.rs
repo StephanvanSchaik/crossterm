@@ -4,6 +4,8 @@ use crossterm_winapi::{ConsoleMode, Handle};
 use parking_lot::Once;
 use winapi::um::wincon::ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 
+use crate::Error;
+
 /// Enable virtual terminal processing.
 ///
 /// This method attempts to enable virtual terminal processing for this
@@ -13,7 +15,7 @@ use winapi::um::wincon::ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 /// When virtual terminal processing is enabled, characters emitted to the
 /// console are parsed for VT100 and similar control character sequences
 /// that control color and other similar operations.
-fn enable_vt_processing() -> std::io::Result<()> {
+fn enable_vt_processing() -> Result<(), Error> {
     let mask = ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 
     let console_mode = ConsoleMode::from(Handle::current_out_handle()?);

@@ -6,6 +6,7 @@ use crate::event::{
     sys::windows::{parse::MouseButtonsPressed, poll::WinApiPoll},
     Event,
 };
+use crate::Error;
 
 #[cfg(feature = "event-stream")]
 use crate::event::sys::Waker;
@@ -24,7 +25,7 @@ pub(crate) struct WindowsEventSource {
 }
 
 impl WindowsEventSource {
-    pub(crate) fn new() -> std::io::Result<WindowsEventSource> {
+    pub(crate) fn new() -> Result<WindowsEventSource, Error> {
         let console = Console::from(Handle::current_in_handle()?);
         Ok(WindowsEventSource {
             console,
@@ -41,7 +42,7 @@ impl WindowsEventSource {
 }
 
 impl EventSource for WindowsEventSource {
-    fn try_read(&mut self, timeout: Option<Duration>) -> std::io::Result<Option<InternalEvent>> {
+    fn try_read(&mut self, timeout: Option<Duration>) -> Result<Option<InternalEvent>, Error> {
         let poll_timeout = PollTimeout::new(timeout);
 
         loop {

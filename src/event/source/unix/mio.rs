@@ -9,6 +9,7 @@ use crate::event::{
     source::EventSource, sys::unix::parse::parse_event, timeout::PollTimeout, Event, InternalEvent,
 };
 use crate::terminal::sys::file_descriptor::{tty_fd, FileDesc};
+use crate::Error;
 
 // Tokens to identify file descriptor
 const TTY_TOKEN: Token = Token(0);
@@ -33,11 +34,11 @@ pub(crate) struct UnixInternalEventSource {
 }
 
 impl UnixInternalEventSource {
-    pub fn new() -> io::Result<Self> {
+    pub fn new() -> Result<Self, Error> {
         UnixInternalEventSource::from_file_descriptor(tty_fd()?)
     }
 
-    pub(crate) fn from_file_descriptor(input_fd: FileDesc) -> io::Result<Self> {
+    pub(crate) fn from_file_descriptor(input_fd: FileDesc) -> Result<Self, Error> {
         let poll = Poll::new()?;
         let registry = poll.registry();
 
@@ -65,7 +66,7 @@ impl UnixInternalEventSource {
 }
 
 impl EventSource for UnixInternalEventSource {
-    fn try_read(&mut self, timeout: Option<Duration>) -> io::Result<Option<InternalEvent>> {
+    fn try_read(&mut self, timeout: Option<Duration>) -> Result<Option<InternalEvent>, Error> {
         if let Some(event) = self.parser.next() {
             return Ok(Some(event));
         }
@@ -80,7 +81,7 @@ impl EventSource for UnixInternalEventSource {
                 if e.kind() == io::ErrorKind::Interrupted {
                     continue;
                 } else {
-                    return Err(e);
+                    return Err(Error::from(e));
                 }
             };
 

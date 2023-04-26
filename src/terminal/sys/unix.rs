@@ -1,6 +1,7 @@
 //! UNIX related logic for terminal manipulation.
 
 use crate::terminal::sys::file_descriptor::{tty_fd, FileDesc};
+use crate::Error;
 use libc::{
     cfmakeraw, ioctl, tcgetattr, tcsetattr, termios as Termios, winsize, STDOUT_FILENO, TCSANOW,
     TIOCGWINSZ,
@@ -21,7 +22,7 @@ pub(crate) fn is_raw_mode_enabled() -> bool {
 }
 
 #[allow(clippy::useless_conversion)]
-pub(crate) fn size() -> io::Result<(u16, u16)> {
+pub(crate) fn size() -> Result<(u16, u16), Error> {
     // http://rosettacode.org/wiki/Terminal_control/Dimensions#Library:_BSD_libc
     let mut size = winsize {
         ws_row: 0,
@@ -48,7 +49,7 @@ pub(crate) fn size() -> io::Result<(u16, u16)> {
     tput_size().ok_or_else(|| std::io::Error::last_os_error().into())
 }
 
-pub(crate) fn enable_raw_mode() -> io::Result<()> {
+pub(crate) fn enable_raw_mode() -> Result<(), Error> {
     let mut original_mode = TERMINAL_MODE_PRIOR_RAW_MODE.lock();
 
     if original_mode.is_some() {
@@ -74,7 +75,7 @@ pub(crate) fn enable_raw_mode() -> io::Result<()> {
 /// More precisely, reset the whole termios mode to what it was before the first call
 /// to [enable_raw_mode]. If you don't mess with termios outside of crossterm, it's
 /// effectively disabling the raw mode and doing nothing else.
-pub(crate) fn disable_raw_mode() -> io::Result<()> {
+pub(crate) fn disable_raw_mode() -> Result<(), Error> {
     let mut original_mode = TERMINAL_MODE_PRIOR_RAW_MODE.lock();
 
     if let Some(original_mode_ios) = original_mode.as_ref() {
@@ -92,7 +93,7 @@ pub(crate) fn disable_raw_mode() -> io::Result<()> {
 /// On unix systems, this function will block and possibly time out while
 /// [`crossterm::event::read`](crate::event::read) or [`crossterm::event::poll`](crate::event::poll) are being called.
 #[cfg(feature = "events")]
-pub fn supports_keyboard_enhancement() -> io::Result<bool> {
+pub fn supports_keyboard_enhancement() -> Result<bool, Error> {
     if is_raw_mode_enabled() {
         read_supports_keyboard_enhancement_raw()
     } else {
@@ -101,7 +102,7 @@ pub fn supports_keyboard_enhancement() -> io::Result<bool> {
 }
 
 #[cfg(feature = "events")]
-fn read_supports_keyboard_enhancement_flags() -> io::Result<bool> {
+fn read_supports_keyboard_enhancement_flags() -> Result<bool, Error> {
     enable_raw_mode()?;
     let flags = read_supports_keyboard_enhancement_raw();
     disable_raw_mode()?;
@@ -109,7 +110,7 @@ fn read_supports_keyboard_enhancement_flags() -> io::Result<bool> {
 }
 
 #[cfg(feature = "events")]
-fn read_supports_keyboard_enhancement_raw() -> io::Result<bool> {
+fn read_supports_keyboard_enhancement_raw() -> Result<bool, Error> {
     use crate::event::{
         filter::{KeyboardEnhancementFlagsFilter, PrimaryDeviceAttributesFilter},
         poll_internal, read_internal, InternalEvent,
@@ -154,10 +155,7 @@ fn read_supports_keyboard_enhancement_raw() -> io::Result<bool> {
                 }
             }
             Ok(false) => {
-                return Err(io::Error::new(
-                    io::ErrorKind::Other,
-                    "The keyboard enhancement status could not be read within a normal duration",
-                ));
+                return Err(Error::KeyboardEnhancementStatusTimeout);
             }
             Err(_) => {}
         }
@@ -199,7 +197,7 @@ fn raw_terminal_attr(termios: &mut Termios) {
     unsafe { cfmakeraw(termios) }
 }
 
-fn get_terminal_attr(fd: RawFd) -> io::Result<Termios> {
+fn get_terminal_attr(fd: RawFd) -> Result<Termios, Error> {
     unsafe {
         let mut termios = mem::zeroed();
         wrap_with_result(tcgetattr(fd, &mut termios))?;
@@ -207,13 +205,13 @@ fn get_terminal_attr(fd: RawFd) -> io::Result<Termios> {
     }
 }
 
-fn set_terminal_attr(fd: RawFd, termios: &Termios) -> io::Result<()> {
+fn set_terminal_attr(fd: RawFd, termios: &Termios) -> Result<(), Error> {
     wrap_with_result(unsafe { tcsetattr(fd, TCSANOW, termios) })
 }
 
-fn wrap_with_result(result: i32) -> io::Result<()> {
+fn wrap_with_result(result: i32) -> Result<(), Error> {
     if result == -1 {
-        Err(io::Error::last_os_error())
+        Err(Error::from(io::Error::last_os_error()))
     } else {
         Ok(())
     }

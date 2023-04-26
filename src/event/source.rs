@@ -1,7 +1,8 @@
-use std::{io, time::Duration};
+use std::time::Duration;
 
 #[cfg(feature = "event-stream")]
 use super::sys::Waker;
+use super::Error;
 use super::InternalEvent;
 
 #[cfg(unix)]
@@ -19,7 +20,7 @@ pub(crate) trait EventSource: Sync + Send {
     ///               for the given timeout
     ///
     /// Returns `Ok(None)` if there's no event available and timeout expires.
-    fn try_read(&mut self, timeout: Option<Duration>) -> io::Result<Option<InternalEvent>>;
+    fn try_read(&mut self, timeout: Option<Duration>) -> Result<Option<InternalEvent>, Error>;
 
     /// Returns a `Waker` allowing to wake/force the `try_read` method to return `Ok(None)`.
     #[cfg(feature = "event-stream")]

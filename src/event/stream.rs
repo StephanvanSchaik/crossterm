@@ -1,5 +1,4 @@
 use std::{
-    io,
     pin::Pin,
     sync::{
         atomic::{AtomicBool, Ordering},
@@ -17,6 +16,7 @@ use crate::event::{
     filter::EventFilter, lock_internal_event_reader, poll_internal, read_internal, sys::Waker,
     Event, InternalEvent,
 };
+use crate::Error;
 
 /// A stream of `Result<Event>`.
 ///
@@ -99,7 +99,7 @@ struct Task {
 // We have to wake up the poll_internal (force it to return Ok(false)) and quit
 // the thread before we drop.
 impl Stream for EventStream {
-    type Item = io::Result<Event>;
+    type Item = Result<Event, Error>;
 
     fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         let result = match poll_internal(Some(Duration::from_secs(0)), &EventFilter) {

@@ -6,6 +6,8 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 use crossterm_winapi::{ConsoleMode, Handle};
 
+use crate::Error;
+
 pub(crate) mod parse;
 pub(crate) mod poll;
 #[cfg(feature = "event-stream")]
@@ -33,7 +35,7 @@ fn original_console_mode() -> std::io::Result<u32> {
         .map_err(|_| io::Error::new(io::ErrorKind::Other, "Initial console modes not set"))
 }
 
-pub(crate) fn enable_mouse_capture() -> std::io::Result<()> {
+pub(crate) fn enable_mouse_capture() -> Result<(), Error> {
     let mode = ConsoleMode::from(Handle::current_in_handle()?);
     init_original_console_mode(mode.mode()?);
     mode.set_mode(ENABLE_MOUSE_MODE)?;
@@ -41,7 +43,7 @@ pub(crate) fn enable_mouse_capture() -> std::io::Result<()> {
     Ok(())
 }
 
-pub(crate) fn disable_mouse_capture() -> std::io::Result<()> {
+pub(crate) fn disable_mouse_capture() -> Result<(), Error> {
     let mode = ConsoleMode::from(Handle::current_in_handle()?);
     mode.set_mode(original_console_mode()?)?;
     Ok(())

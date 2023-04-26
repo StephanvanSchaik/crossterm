@@ -9,12 +9,12 @@ use winapi::{
     um::wincon::{SetConsoleTitleW, ENABLE_ECHO_INPUT, ENABLE_LINE_INPUT, ENABLE_PROCESSED_INPUT},
 };
 
-use crate::{cursor, terminal::ClearType};
+use crate::{cursor, terminal::ClearType, Error};
 
 /// bits which can't be set in raw mode
 const NOT_RAW_MODE_MASK: DWORD = ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT | ENABLE_PROCESSED_INPUT;
 
-pub(crate) fn is_raw_mode_enabled() -> std::io::Result<bool> {
+pub(crate) fn is_raw_mode_enabled() -> Result<bool, Error> {
     let console_mode = ConsoleMode::from(Handle::current_in_handle()?);
 
     let dw_mode = console_mode.mode()?;
@@ -25,7 +25,7 @@ pub(crate) fn is_raw_mode_enabled() -> std::io::Result<bool> {
     )
 }
 
-pub(crate) fn enable_raw_mode() -> std::io::Result<()> {
+pub(crate) fn enable_raw_mode() -> Result<(), Error> {
     let console_mode = ConsoleMode::from(Handle::current_in_handle()?);
 
     let dw_mode = console_mode.mode()?;
@@ -37,7 +37,7 @@ pub(crate) fn enable_raw_mode() -> std::io::Result<()> {
     Ok(())
 }
 
-pub(crate) fn disable_raw_mode() -> std::io::Result<()> {
+pub(crate) fn disable_raw_mode() -> Result<(), Error> {
     let console_mode = ConsoleMode::from(Handle::current_in_handle()?);
 
     let dw_mode = console_mode.mode()?;
@@ -49,7 +49,7 @@ pub(crate) fn disable_raw_mode() -> std::io::Result<()> {
     Ok(())
 }
 
-pub(crate) fn size() -> io::Result<(u16, u16)> {
+pub(crate) fn size() -> Result<(u16, u16), Error> {
     let terminal_size = ScreenBuffer::current()?.info()?.terminal_size();
     // windows starts counting at 0, unix at 1, add one to replicated unix behaviour.
     Ok((
@@ -62,11 +62,11 @@ pub(crate) fn size() -> io::Result<(u16, u16)> {
 ///
 /// This always returns `Ok(false)` on Windows.
 #[cfg(feature = "events")]
-pub fn supports_keyboard_enhancement() -> std::io::Result<bool> {
+pub fn supports_keyboard_enhancement() -> Result<bool, Error> {
     Ok(false)
 }
 
-pub(crate) fn clear(clear_type: ClearType) -> std::io::Result<()> {
+pub(crate) fn clear(clear_type: ClearType) -> Result<(), Error> {
     let screen_buffer = ScreenBuffer::current()?;
     let csbi = screen_buffer.info()?;
 
@@ -89,7 +89,7 @@ pub(crate) fn clear(clear_type: ClearType) -> std::io::Result<()> {
     Ok(())
 }
 
-pub(crate) fn scroll_up(row_count: u16) -> std::io::Result<()> {
+pub(crate) fn scroll_up(row_count: u16) -> Result<(), Error> {
     let csbi = ScreenBuffer::current()?;
     let mut window = csbi.info()?.terminal_window();
 
@@ -104,7 +104,7 @@ pub(crate) fn scroll_up(row_count: u16) -> std::io::Result<()> {
     Ok(())
 }
 
-pub(crate) fn scroll_down(row_count: u16) -> std::io::Result<()> {
+pub(crate) fn scroll_down(row_count: u16) -> Result<(), Error> {
     let screen_buffer = ScreenBuffer::current()?;
     let csbi = screen_buffer.info()?;
     let mut window = csbi.terminal_window();
@@ -121,19 +121,13 @@ pub(crate) fn scroll_down(row_count: u16) -> std::io::Result<()> {
     Ok(())
 }
 
-pub(crate) fn set_size(width: u16, height: u16) -> std::io::Result<()> {
+pub(crate) fn set_size(width: u16, height: u16) -> Result<(), Error> {
     if width <= 1 {
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidInput,
-            "terminal width must be at least 1",
-        ));
+        return Err(Error::TerminalWidthTooSmall);
     }
 
     if height <= 1 {
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidInput,
-            "terminal height must be at least 1",
-        ));
+        return Err(Error::TerminalHeightTooSmall);
     }
 
     // get the position of the current console window
@@ -153,10 +147,7 @@ pub(crate) fn set_size(width: u16, height: u16) -> std::io::Result<()> {
     let width = width as i16;
     if current_size.width < window.left + width {
         if window.left >= i16::max_value() - width {
-            return Err(io::Error::new(
-                io::ErrorKind::InvalidInput,
-                "terminal width too large",
-            ));
+            return Err(Error::TerminalWidthTooLarge);
         }
 
         new_size.width = window.left + width;
@@ -165,10 +156,7 @@ pub(crate) fn set_size(width: u16, height: u16) -> std::io::Result<()> {
     let height = height as i16;
     if current_size.height < window.top + height {
         if window.top >= i16::max_value() - height {
-            return Err(io::Error::new(
-                io::ErrorKind::InvalidInput,
-                "terminal height too large",
-            ));
+            return Err(Error::TerminalHeightTooLarge);
         }
 
         new_size.height = window.top + height;
@@ -194,22 +182,16 @@ pub(crate) fn set_size(width: u16, height: u16) -> std::io::Result<()> {
     let bounds = console.largest_window_size()?;
 
     if width > bounds.x {
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidInput,
-            format!("terminal width {width} too large"),
-        ));
+        return Err(Error::TerminalWidthTooLarge);
     }
     if height > bounds.y {
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidInput,
-            format!("terminal height {height} too large"),
-        ));
+        return Err(Error::TerminalHeightTooLarge);
     }
 
     Ok(())
 }
 
-pub(crate) fn set_window_title(title: impl fmt::Display) -> std::io::Result<()> {
+pub(crate) fn set_window_title(title: impl fmt::Display) -> Result<(), Error> {
     struct Utf16Encoder(Vec<u16>);
     impl Write for Utf16Encoder {
         fn write_str(&mut self, s: &str) -> fmt::Result {
@@ -227,7 +209,7 @@ pub(crate) fn set_window_title(title: impl fmt::Display) -> std::io::Result<()> 
     if result != 0 {
         Ok(())
     } else {
-        Err(io::Error::last_os_error())
+        Err(Error::from(io::Error::last_os_error()))
     }
 }
 
@@ -235,7 +217,7 @@ fn clear_after_cursor(
     location: Coord,
     buffer_size: Size,
     current_attribute: u16,
-) -> std::io::Result<()> {
+) -> Result<(), Error> {
     let (mut x, mut y) = (location.x, location.y);
 
     // if cursor position is at the outer right position
@@ -257,7 +239,7 @@ fn clear_before_cursor(
     location: Coord,
     buffer_size: Size,
     current_attribute: u16,
-) -> std::io::Result<()> {
+) -> Result<(), Error> {
     let (xpos, ypos) = (location.x, location.y);
 
     // one cell after cursor position
@@ -275,7 +257,7 @@ fn clear_before_cursor(
     clear_winapi(start_location, cells_to_write, current_attribute)
 }
 
-fn clear_entire_screen(buffer_size: Size, current_attribute: u16) -> std::io::Result<()> {
+fn clear_entire_screen(buffer_size: Size, current_attribute: u16) -> Result<(), Error> {
     // get sum cells before cursor
     let cells_to_write = buffer_size.width as u32 * buffer_size.height as u32;
 
@@ -294,7 +276,7 @@ fn clear_current_line(
     location: Coord,
     buffer_size: Size,
     current_attribute: u16,
-) -> std::io::Result<()> {
+) -> Result<(), Error> {
     // location where to start clearing
     let start_location = Coord::new(0, location.y);
 
@@ -313,7 +295,7 @@ fn clear_until_line(
     location: Coord,
     buffer_size: Size,
     current_attribute: u16,
-) -> std::io::Result<()> {
+) -> Result<(), Error> {
     let (x, y) = (location.x, location.y);
 
     // location where to start clearing
@@ -334,7 +316,7 @@ fn clear_winapi(
     start_location: Coord,
     cells_to_write: u32,
     current_attribute: u16,
-) -> std::io::Result<()> {
+) -> Result<(), Error> {
     let console = Console::from(Handle::current_out_handle()?);
     console.fill_whit_character(start_location, cells_to_write, ' ')?;
     console.fill_whit_attribute(start_location, cells_to_write, current_attribute)?;

@@ -174,11 +174,11 @@
 //! ```no_run
 //! use std::io::{self, Write};
 //! use crossterm::{
-//!     ExecutableCommand, QueueableCommand,
+//!     Error, ExecutableCommand, QueueableCommand,
 //!     terminal, cursor, style::{self, Stylize}
 //! };
 //!
-//! fn main() -> io::Result<()> {
+//! fn main() -> Result<(), Error> {
 //!   let mut stdout = io::stdout();
 //!
 //!   stdout.execute(terminal::Clear(terminal::ClearType::All))?;
@@ -203,11 +203,11 @@
 //! ```no_run
 //! use std::io::{self, Write};
 //! use crossterm::{
-//!     execute, queue,
+//!     Error, execute, queue,
 //!     style::{self, Stylize}, cursor, terminal
 //! };
 //!
-//! fn main() -> io::Result<()> {
+//! fn main() -> Result<(), Error> {
 //!   let mut stdout = io::stdout();
 //!
 //!   execute!(stdout, terminal::Clear(terminal::ClearType::All))?;
@@ -230,10 +230,15 @@
 //! [stderr]: https://doc.rust-lang.org/std/io/fn.stderr.html
 //! [flush]: https://doc.rust-lang.org/std/io/trait.Write.html#tymethod.flush
 
+extern crate self as crossterm;
+
 pub use crate::command::{Command, ExecutableCommand, QueueableCommand, SynchronizedUpdate};
+pub use crate::error::Error;
 
 /// A module to work with the terminal cursor
 pub mod cursor;
+/// A module to abstract errors.
+pub mod error;
 /// A module to read events.
 #[cfg(feature = "events")]
 pub mod event;

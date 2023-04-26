@@ -1,8 +1,9 @@
 use std::{
-    io::{self, Error, ErrorKind, Write},
+    io::{self, Write},
     time::Duration,
 };
 
+use crate::Error;
 use crate::{
     event::{filter::CursorPositionFilter, poll_internal, read_internal, InternalEvent},
     terminal::{disable_raw_mode, enable_raw_mode, sys::is_raw_mode_enabled},
@@ -14,7 +15,7 @@ use crate::{
 ///
 /// On unix systems, this function will block and possibly time out while
 /// [`crossterm::event::read`](crate::event::read) or [`crossterm::event::poll`](crate::event::poll) are being called.
-pub fn position() -> io::Result<(u16, u16)> {
+pub fn position() -> Result<(u16, u16), Error> {
     if is_raw_mode_enabled() {
         read_position_raw()
     } else {
@@ -22,14 +23,14 @@ pub fn position() -> io::Result<(u16, u16)> {
     }
 }
 
-fn read_position() -> io::Result<(u16, u16)> {
+fn read_position() -> Result<(u16, u16), Error> {
     enable_raw_mode()?;
     let pos = read_position_raw();
     disable_raw_mode()?;
     pos
 }
 
-fn read_position_raw() -> io::Result<(u16, u16)> {
+fn read_position_raw() -> Result<(u16, u16), Error> {
     // Use `ESC [ 6 n` to and retrieve the cursor position.
     let mut stdout = io::stdout();
     stdout.write_all(b"\x1B[6n")?;
@@ -45,10 +46,7 @@ fn read_position_raw() -> io::Result<(u16, u16)> {
                 }
             }
             Ok(false) => {
-                return Err(Error::new(
-                    ErrorKind::Other,
-                    "The cursor position could not be read within a normal duration",
-                ));
+                return Err(Error::CursorPositionTimeout);
             }
             Err(_) => {}
         }

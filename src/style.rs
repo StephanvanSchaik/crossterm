@@ -29,10 +29,10 @@
 //!
 //! ```no_run
 //! use std::io::{self, Write};
-//! use crossterm::execute;
+//! use crossterm::{Error, execute};
 //! use crossterm::style::{Print, SetForegroundColor, SetBackgroundColor, ResetColor, Color, Attribute};
 //!
-//! fn main() -> io::Result<()> {
+//! fn main() -> Result<(), Error> {
 //!     execute!(
 //!         io::stdout(),
 //!         // Blue foreground
@@ -69,10 +69,10 @@
 //! ```no_run
 //! use std::io::{self, Write};
 //!
-//! use crossterm::{execute, style::Print};
+//! use crossterm::{Error, execute, style::Print};
 //! use crossterm::style::{SetAttribute, Attribute};
 //!
-//! fn main() -> io::Result<()> {
+//! fn main() -> Result<(), Error> {
 //!     execute!(
 //!         io::stdout(),
 //!         // Set to bold
@@ -118,6 +118,9 @@ use std::{
 
 use crate::command::execute_fmt;
 use crate::{csi, impl_display, Command};
+
+#[cfg(windows)]
+use crate::Error;
 
 pub use self::{
     attributes::Attributes,
@@ -185,7 +188,7 @@ impl Command for SetForegroundColor {
     }
 
     #[cfg(windows)]
-    fn execute_winapi(&self) -> std::io::Result<()> {
+    fn execute_winapi(&self) -> Result<(), Error> {
         sys::windows::set_foreground_color(self.0)
     }
 }
@@ -209,7 +212,7 @@ impl Command for SetBackgroundColor {
     }
 
     #[cfg(windows)]
-    fn execute_winapi(&self) -> std::io::Result<()> {
+    fn execute_winapi(&self) -> Result<(), Error> {
         sys::windows::set_background_color(self.0)
     }
 }
@@ -233,11 +236,8 @@ impl Command for SetUnderlineColor {
     }
 
     #[cfg(windows)]
-    fn execute_winapi(&self) -> std::io::Result<()> {
-        Err(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            "SetUnderlineColor not supported by winapi.",
-        ))
+    fn execute_winapi(&self) -> Result<(), Error> {
+        Err(Error::SetUnderlineColorUnsupported)
     }
 }
 
@@ -277,7 +277,7 @@ impl Command for SetColors {
     }
 
     #[cfg(windows)]
-    fn execute_winapi(&self) -> std::io::Result<()> {
+    fn execute_winapi(&self) -> Result<(), Error> {
         if let Some(color) = self.0.foreground {
             sys::windows::set_foreground_color(color)?;
         }
@@ -304,7 +304,7 @@ impl Command for SetAttribute {
     }
 
     #[cfg(windows)]
-    fn execute_winapi(&self) -> std::io::Result<()> {
+    fn execute_winapi(&self) -> Result<(), Error> {
         // attributes are not supported by WinAPI.
         Ok(())
     }
@@ -331,7 +331,7 @@ impl Command for SetAttributes {
     }
 
     #[cfg(windows)]
-    fn execute_winapi(&self) -> std::io::Result<()> {
+    fn execute_winapi(&self) -> Result<(), Error> {
         // attributes are not supported by WinAPI.
         Ok(())
     }
@@ -364,7 +364,7 @@ impl Command for SetStyle {
     }
 
     #[cfg(windows)]
-    fn execute_winapi(&self) -> std::io::Result<()> {
+    fn execute_winapi(&self) -> Result<(), Error> {
         panic!("tried to execute SetStyle command using WinAPI, use ANSI instead");
     }
 
@@ -431,7 +431,7 @@ impl<D: Display> Command for PrintStyledContent<D> {
     }
 
     #[cfg(windows)]
-    fn execute_winapi(&self) -> std::io::Result<()> {
+    fn execute_winapi(&self) -> Result<(), Error> {
         Ok(())
     }
 }
@@ -450,7 +450,7 @@ impl Command for ResetColor {
     }
 
     #[cfg(windows)]
-    fn execute_winapi(&self) -> std::io::Result<()> {
+    fn execute_winapi(&self) -> Result<(), Error> {
         sys::windows::reset()
     }
 }
@@ -467,7 +467,7 @@ impl<T: Display> Command for Print<T> {
     }
 
     #[cfg(windows)]
-    fn execute_winapi(&self) -> std::io::Result<()> {
+    fn execute_winapi(&self) -> Result<(), Error> {
         panic!("tried to execute Print command using WinAPI, use ANSI instead");
     }
 

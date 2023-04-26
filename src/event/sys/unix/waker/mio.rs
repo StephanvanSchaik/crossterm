@@ -1,5 +1,7 @@
 use std::sync::{Arc, Mutex};
 
+use crate::Error;
+
 use ::mio::{Registry, Token};
 
 /// Allows to wake up the `mio::Poll::poll()` method.
@@ -11,7 +13,7 @@ pub(crate) struct Waker {
 
 impl Waker {
     /// Create a new `Waker`.
-    pub(crate) fn new(registry: &Registry, waker_token: Token) -> std::io::Result<Self> {
+    pub(crate) fn new(registry: &Registry, waker_token: Token) -> Result<Self, Error> {
         Ok(Self {
             inner: Arc::new(Mutex::new(mio::Waker::new(registry, waker_token)?)),
         })
@@ -20,7 +22,7 @@ impl Waker {
     /// Wake up the [`Poll`] associated with this `Waker`.
     ///
     /// Readiness is set to `Ready::readable()`.
-    pub(crate) fn wake(&self) -> std::io::Result<()> {
+    pub(crate) fn wake(&self) -> Result<(), Error> {
         self.inner.lock().unwrap().wake()
     }
 
@@ -28,7 +30,7 @@ impl Waker {
     ///
     /// This function is not impl
     #[allow(dead_code, clippy::clippy::unnecessary_wraps)]
-    pub(crate) fn reset(&self) -> std::io::Result<()> {
+    pub(crate) fn reset(&self) -> Result<(), Error> {
         Ok(())
     }
 }

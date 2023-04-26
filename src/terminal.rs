@@ -64,9 +64,9 @@
 //!
 //! ```no_run
 //! use std::io::{self, Write};
-//! use crossterm::{execute, terminal::{ScrollUp, SetSize, size}};
+//! use crossterm::{Error, execute, terminal::{ScrollUp, SetSize, size}};
 //!
-//! fn main() -> io::Result<()> {
+//! fn main() -> Result<(), Error> {
 //!     let (cols, rows) = size()?;
 //!     // Resize terminal and scroll up.
 //!     execute!(
@@ -83,7 +83,7 @@
 //!
 //! For manual execution control check out [crossterm::queue](../macro.queue.html).
 
-use std::{fmt, io};
+use std::fmt;
 
 #[cfg(windows)]
 use crossterm_winapi::{ConsoleMode, Handle, ScreenBuffer};
@@ -92,9 +92,9 @@ use serde::{Deserialize, Serialize};
 #[cfg(windows)]
 use winapi::um::wincon::ENABLE_WRAP_AT_EOL_OUTPUT;
 
-#[doc(no_inline)]
-use crate::Command;
 use crate::{csi, impl_display};
+#[doc(no_inline)]
+use crate::{Command, Error};
 
 pub(crate) mod sys;
 
@@ -104,7 +104,7 @@ pub use sys::supports_keyboard_enhancement;
 /// Tells whether the raw mode is enabled.
 ///
 /// Please have a look at the [raw mode](./index.html#raw-mode) section.
-pub fn is_raw_mode_enabled() -> io::Result<bool> {
+pub fn is_raw_mode_enabled() -> Result<bool, Error> {
     #[cfg(unix)]
     {
         Ok(sys::is_raw_mode_enabled())
@@ -119,21 +119,21 @@ pub fn is_raw_mode_enabled() -> io::Result<bool> {
 /// Enables raw mode.
 ///
 /// Please have a look at the [raw mode](./index.html#raw-mode) section.
-pub fn enable_raw_mode() -> io::Result<()> {
+pub fn enable_raw_mode() -> Result<(), Error> {
     sys::enable_raw_mode()
 }
 
 /// Disables raw mode.
 ///
 /// Please have a look at the [raw mode](./index.html#raw-mode) section.
-pub fn disable_raw_mode() -> io::Result<()> {
+pub fn disable_raw_mode() -> Result<(), Error> {
     sys::disable_raw_mode()
 }
 
 /// Returns the terminal size `(columns, rows)`.
 ///
 /// The top left cell is represented `(1, 1)`.
-pub fn size() -> io::Result<(u16, u16)> {
+pub fn size() -> Result<(u16, u16), Error> {
     sys::size()
 }
 
@@ -147,7 +147,7 @@ impl Command for DisableLineWrap {
     }
 
     #[cfg(windows)]
-    fn execute_winapi(&self) -> io::Result<()> {
+    fn execute_winapi(&self) -> Result<(), Error> {
         let screen_buffer = ScreenBuffer::current()?;
         let console_mode = ConsoleMode::from(screen_buffer.handle().clone());
         let new_mode = console_mode.mode()? & !ENABLE_WRAP_AT_EOL_OUTPUT;
@@ -166,7 +166,7 @@ impl Command for EnableLineWrap {
     }
 
     #[cfg(windows)]
-    fn execute_winapi(&self) -> io::Result<()> {
+    fn execute_winapi(&self) -> Result<(), Error> {
         let screen_buffer = ScreenBuffer::current()?;
         let console_mode = ConsoleMode::from(screen_buffer.handle().clone());
         let new_mode = console_mode.mode()? | ENABLE_WRAP_AT_EOL_OUTPUT;
@@ -186,9 +186,9 @@ impl Command for EnableLineWrap {
 ///
 /// ```no_run
 /// use std::io::{self, Write};
-/// use crossterm::{execute, terminal::{EnterAlternateScreen, LeaveAlternateScreen}};
+/// use crossterm::{Error, execute, terminal::{EnterAlternateScreen, LeaveAlternateScreen}};
 ///
-/// fn main() -> io::Result<()> {
+/// fn main() -> Result<(), Error> {
 ///     execute!(io::stdout(), EnterAlternateScreen)?;
 ///
 ///     // Do anything on the alternate screen
@@ -206,7 +206,7 @@ impl Command for EnterAlternateScreen {
     }
 
     #[cfg(windows)]
-    fn execute_winapi(&self) -> io::Result<()> {
+    fn execute_winapi(&self) -> Result<(), Error> {
         let alternate_screen = ScreenBuffer::create()?;
         alternate_screen.show()?;
         Ok(())
@@ -224,9 +224,9 @@ impl Command for EnterAlternateScreen {
 ///
 /// ```no_run
 /// use std::io::{self, Write};
-/// use crossterm::{execute, terminal::{EnterAlternateScreen, LeaveAlternateScreen}};
+/// use crossterm::{Error, execute, terminal::{EnterAlternateScreen, LeaveAlternateScreen}};
 ///
-/// fn main() -> io::Result<()> {
+/// fn main() -> Result<(), Error> {
 ///     execute!(io::stdout(), EnterAlternateScreen)?;
 ///
 ///     // Do anything on the alternate screen
@@ -244,7 +244,7 @@ impl Command for LeaveAlternateScreen {
     }
 
     #[cfg(windows)]
-    fn execute_winapi(&self) -> io::Result<()> {
+    fn execute_winapi(&self) -> Result<(), Error> {
         let screen_buffer = ScreenBuffer::from(Handle::current_out_handle()?);
         screen_buffer.show()?;
         Ok(())
@@ -286,7 +286,7 @@ impl Command for ScrollUp {
     }
 
     #[cfg(windows)]
-    fn execute_winapi(&self) -> io::Result<()> {
+    fn execute_winapi(&self) -> Result<(), Error> {
         sys::scroll_up(self.0)
     }
 }
@@ -308,7 +308,7 @@ impl Command for ScrollDown {
     }
 
     #[cfg(windows)]
-    fn execute_winapi(&self) -> io::Result<()> {
+    fn execute_winapi(&self) -> Result<(), Error> {
         sys::scroll_down(self.0)
     }
 }
@@ -336,7 +336,7 @@ impl Command for Clear {
     }
 
     #[cfg(windows)]
-    fn execute_winapi(&self) -> io::Result<()> {
+    fn execute_winapi(&self) -> Result<(), Error> {
         sys::clear(self.0)
     }
 }
@@ -355,7 +355,7 @@ impl Command for SetSize {
     }
 
     #[cfg(windows)]
-    fn execute_winapi(&self) -> io::Result<()> {
+    fn execute_winapi(&self) -> Result<(), Error> {
         sys::set_size(self.0, self.1)
     }
 }
@@ -374,7 +374,7 @@ impl<T: fmt::Display> Command for SetTitle<T> {
     }
 
     #[cfg(windows)]
-    fn execute_winapi(&self) -> io::Result<()> {
+    fn execute_winapi(&self) -> Result<(), Error> {
         sys::set_window_title(&self.0)
     }
 }
@@ -400,9 +400,9 @@ impl<T: fmt::Display> Command for SetTitle<T> {
 ///
 /// ```no_run
 /// use std::io::{self, Write};
-/// use crossterm::{execute, terminal::{BeginSynchronizedUpdate, EndSynchronizedUpdate}};
+/// use crossterm::{Error, execute, terminal::{BeginSynchronizedUpdate, EndSynchronizedUpdate}};
 ///
-/// fn main() -> io::Result<()> {
+/// fn main() -> Result<(), Error> {
 ///     execute!(io::stdout(), BeginSynchronizedUpdate)?;
 ///
 ///     // Anything performed here will not be rendered until EndSynchronizedUpdate is called.
@@ -421,7 +421,7 @@ impl Command for BeginSynchronizedUpdate {
     }
 
     #[cfg(windows)]
-    fn execute_winapi(&self) -> io::Result<()> {
+    fn execute_winapi(&self) -> Result<(), Error> {
         Ok(())
     }
 
@@ -453,9 +453,9 @@ impl Command for BeginSynchronizedUpdate {
 ///
 /// ```no_run
 /// use std::io::{self, Write};
-/// use crossterm::{execute, terminal::{BeginSynchronizedUpdate, EndSynchronizedUpdate}};
+/// use crossterm::{Error, execute, terminal::{BeginSynchronizedUpdate, EndSynchronizedUpdate}};
 ///
-/// fn main() -> io::Result<()> {
+/// fn main() -> Result<(), Error> {
 ///     execute!(io::stdout(), BeginSynchronizedUpdate)?;
 ///
 ///     // Anything performed here will not be rendered until EndSynchronizedUpdate is called.
@@ -474,7 +474,7 @@ impl Command for EndSynchronizedUpdate {
     }
 
     #[cfg(windows)]
-    fn execute_winapi(&self) -> io::Result<()> {
+    fn execute_winapi(&self) -> Result<(), Error> {
         Ok(())
     }
 

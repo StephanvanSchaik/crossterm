@@ -82,7 +82,7 @@ macro_rules! queue {
 ///
 /// ```rust
 /// use std::io::{Write, stdout};
-/// use crossterm::{execute, style::Print};
+/// use crossterm::{Error, execute, style::Print};
 ///
 /// // will be executed directly
 /// execute!(stdout(), Print("sum:\n".to_string()));
@@ -113,7 +113,10 @@ macro_rules! execute {
         // Queue each command, then flush
         $crate::queue!($writer $(, $command)*)
             .and_then(|()| {
-                ::std::io::Write::flush($writer.by_ref())
+                match ::std::io::Write::flush($writer.by_ref()) {
+                    Err(e) => Err(crossterm::Error::from(e)),
+                    Ok(()) => Ok(()),
+                }
             })
     }}
 }
@@ -155,7 +158,7 @@ mod tests {
     }
 
     impl io::Write for FakeWrite {
-        fn write(&mut self, content: &[u8]) -> io::Result<usize> {
+        fn write(&mut self, content: &[u8]) -> Result<usize, io::Error> {
             let content = str::from_utf8(content)
                 .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
             self.buffer.push_str(content);
@@ -163,7 +166,7 @@ mod tests {
             Ok(content.len())
         }
 
-        fn flush(&mut self) -> io::Result<()> {
+        fn flush(&mut self) -> Result<(), io::Error> {
             self.flushed = true;
             Ok(())
         }
@@ -241,6 +244,7 @@ mod tests {
 
         use super::FakeWrite;
         use crate::command::Command;
+        use crate::Error;
 
         // We need to test two different APIs: WinAPI and the write api. We
         // don't know until runtime which we're supporting (via
@@ -272,7 +276,7 @@ mod tests {
                 f.write_str(self.value)
             }
 
-            fn execute_winapi(&self) -> std::io::Result<()> {
+            fn execute_winapi(&self) -> Result<(), Error> {
                 self.stream.borrow_mut().push(self.value);
                 Ok(())
             }
@@ -293,7 +297,7 @@ mod tests {
         // write buffer are equal to the concatenation of `stream_result`.
         fn test_harness(
             stream_result: &[&'static str],
-            test: impl FnOnce(&mut FakeWrite, &mut WindowsEventStream) -> std::io::Result<()>,
+            test: impl FnOnce(&mut FakeWrite, &mut WindowsEventStream) -> Result<(), Error>,
         ) {
             let mut stream = WindowsEventStream::default();
             let mut writer = FakeWrite::default();
