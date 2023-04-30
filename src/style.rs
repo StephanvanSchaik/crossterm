@@ -113,7 +113,6 @@
 
 use alloc::string::String;
 use core::fmt::{self, Display};
-use std::env;
 
 use crate::command::execute_fmt;
 use crate::{csi, impl_display, Command};
@@ -157,15 +156,22 @@ pub fn style<D: Display>(val: D) -> StyledContent<D> {
     ContentStyle::new().apply(val)
 }
 
+#[cfg(feature = "std")]
 /// Returns available color count.
 ///
 /// # Notes
 ///
 /// This does not always provide a good result.
 pub fn available_color_count() -> usize {
-    env::var("TERM")
+    std::env::var("TERM")
         .map(|x| if x.contains("256color") { 256 } else { 8 })
         .unwrap_or(8)
+}
+
+#[cfg(not(feature = "std"))]
+/// Returns available color count.
+pub fn available_color_count() -> usize {
+    8
 }
 
 /// A command that sets the the foreground color.

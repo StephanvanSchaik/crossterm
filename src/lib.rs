@@ -1,4 +1,5 @@
 #![deny(unused_imports, unused_must_use)]
+#![cfg_attr(not(feature = "std"), no_std)]
 
 //! # Cross-platform Terminal Manipulation Library
 //!

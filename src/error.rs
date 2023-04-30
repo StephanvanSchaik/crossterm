@@ -3,6 +3,7 @@
 /// The error type.
 #[derive(Debug)]
 pub enum Error {
+    #[cfg(feature = "std")]
     /// Represents [`std::io::Error`].
     Io(std::io::Error),
     CouldNotParseEvent,
@@ -32,6 +33,7 @@ pub enum Error {
 impl core::fmt::Display for Error {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         match self {
+            #[cfg(feature = "std")]
             Self::Io(e) => e.fmt(f),
             Self::CouldNotParseEvent => write!(f, "could not parse event"),
             Self::KeyboardEnhancementStatusTimeout => write!(
@@ -61,6 +63,7 @@ impl core::fmt::Display for Error {
     }
 }
 
+#[cfg(feature = "std")]
 impl From<std::io::Error> for Error {
     fn from(e: std::io::Error) -> Self {
         Self::Io(e)

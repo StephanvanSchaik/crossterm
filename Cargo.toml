@@ -26,7 +26,8 @@ all-features = true
 # Features
 #
 [features]
-default = ["bracketed-paste", "windows", "events"]
+std = ["parking_lot"]
+default = ["bracketed-paste", "windows", "events", "std"]
 windows = ["dep:winapi", "dep:crossterm_winapi"] # Disables winapi dependencies from being included into the binary (SHOULD NOT be disabled on windows).
 bracketed-paste = [] # Enables triggering a `Event::Paste` when pasting text into the terminal.
 event-stream = ["dep:futures-core", "events"] # Enables async events
@@ -39,10 +40,10 @@ serde = ["dep:serde", "bitflags/serde"] # Enables 'serde' for various types.
 #
 [dependencies]
 bitflags = {version = "2.1" }
-parking_lot = "0.12"
 
 # optional deps only added when requested
 futures-core = { version = "0.3", optional = true, default-features = false }
+parking_lot = { version = "0.12", optional = true }
 serde = { version = "1.0", features = ["derive"], optional = true }
 
 #
