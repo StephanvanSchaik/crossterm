@@ -133,7 +133,7 @@ pub fn disable_raw_mode() -> Result<(), Error> {
 /// Returns the terminal size `(columns, rows)`.
 ///
 /// The top left cell is represented `(1, 1)`.
-pub fn size() -> Result<(u16, u16), Error> {
+pub fn size() -> Result<(usize, usize), Error> {
     sys::size()
 }
 
@@ -275,7 +275,7 @@ pub enum ClearType {
 ///
 /// Commands must be executed/queued for execution otherwise they do nothing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct ScrollUp(pub u16);
+pub struct ScrollUp(pub usize);
 
 impl Command for ScrollUp {
     fn write_ansi(&self, f: &mut impl fmt::Write) -> fmt::Result {
@@ -297,7 +297,7 @@ impl Command for ScrollUp {
 ///
 /// Commands must be executed/queued for execution otherwise they do nothing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct ScrollDown(pub u16);
+pub struct ScrollDown(pub usize);
 
 impl Command for ScrollDown {
     fn write_ansi(&self, f: &mut impl fmt::Write) -> fmt::Result {
@@ -347,7 +347,7 @@ impl Command for Clear {
 ///
 /// Commands must be executed/queued for execution otherwise they do nothing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct SetSize(pub u16, pub u16);
+pub struct SetSize(pub usize, pub usize);
 
 impl Command for SetSize {
     fn write_ansi(&self, f: &mut impl fmt::Write) -> fmt::Result {

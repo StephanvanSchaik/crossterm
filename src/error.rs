@@ -17,8 +17,8 @@ pub enum Error {
     TerminalWidthTooLarge,
     /// The requested terminal height is too large.
     TerminalHeightTooLarge,
-    CursorXOutOfRange(i16),
-    CursorYOutOfRange(i16),
+    CursorXOutOfRange(usize),
+    CursorYOutOfRange(usize),
     /// Setting an underline color is not supported.
     SetUnderlineColorUnsupported,
     /// Bracketed paste is not supported.

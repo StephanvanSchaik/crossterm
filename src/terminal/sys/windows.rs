@@ -49,12 +49,12 @@ pub(crate) fn disable_raw_mode() -> Result<(), Error> {
     Ok(())
 }
 
-pub(crate) fn size() -> Result<(u16, u16), Error> {
+pub(crate) fn size() -> Result<(usize, usize), Error> {
     let terminal_size = ScreenBuffer::current()?.info()?.terminal_size();
     // windows starts counting at 0, unix at 1, add one to replicated unix behaviour.
     Ok((
-        (terminal_size.width + 1) as u16,
-        (terminal_size.height + 1) as u16,
+        (terminal_size.width + 1) as usize,
+        (terminal_size.height + 1) as usize,
     ))
 }
 
@@ -89,7 +89,7 @@ pub(crate) fn clear(clear_type: ClearType) -> Result<(), Error> {
     Ok(())
 }
 
-pub(crate) fn scroll_up(row_count: u16) -> Result<(), Error> {
+pub(crate) fn scroll_up(row_count: usize) -> Result<(), Error> {
     let csbi = ScreenBuffer::current()?;
     let mut window = csbi.info()?.terminal_window();
 
@@ -104,7 +104,7 @@ pub(crate) fn scroll_up(row_count: u16) -> Result<(), Error> {
     Ok(())
 }
 
-pub(crate) fn scroll_down(row_count: u16) -> Result<(), Error> {
+pub(crate) fn scroll_down(row_count: usize) -> Result<(), Error> {
     let screen_buffer = ScreenBuffer::current()?;
     let csbi = screen_buffer.info()?;
     let mut window = csbi.terminal_window();
@@ -121,7 +121,7 @@ pub(crate) fn scroll_down(row_count: u16) -> Result<(), Error> {
     Ok(())
 }
 
-pub(crate) fn set_size(width: u16, height: u16) -> Result<(), Error> {
+pub(crate) fn set_size(width: usize, height: usize) -> Result<(), Error> {
     if width <= 1 {
         return Err(Error::TerminalWidthTooSmall);
     }
@@ -287,7 +287,7 @@ fn clear_current_line(
     clear_winapi(start_location, cells_to_write, current_attribute)?;
 
     // put the cursor back at cell 1 on current row
-    cursor::sys::move_to(0, location.y as u16)?;
+    cursor::sys::move_to(0, location.y as usize)?;
     Ok(())
 }
 
@@ -308,7 +308,7 @@ fn clear_until_line(
     clear_winapi(start_location, cells_to_write, current_attribute)?;
 
     // put the cursor back at original cursor position before we did the clearing
-    cursor::sys::move_to(x as u16, y as u16)?;
+    cursor::sys::move_to(x as usize, y as usize)?;
     Ok(())
 }
 

@@ -15,7 +15,7 @@ use crate::{
 ///
 /// On unix systems, this function will block and possibly time out while
 /// [`crossterm::event::read`](crate::event::read) or [`crossterm::event::poll`](crate::event::poll) are being called.
-pub fn position() -> Result<(u16, u16), Error> {
+pub fn position() -> Result<(usize, usize), Error> {
     if is_raw_mode_enabled() {
         read_position_raw()
     } else {
@@ -23,14 +23,14 @@ pub fn position() -> Result<(u16, u16), Error> {
     }
 }
 
-fn read_position() -> Result<(u16, u16), Error> {
+fn read_position() -> Result<(usize, usize), Error> {
     enable_raw_mode()?;
     let pos = read_position_raw();
     disable_raw_mode()?;
     pos
 }
 
-fn read_position_raw() -> Result<(u16, u16), Error> {
+fn read_position_raw() -> Result<(usize, usize), Error> {
     // Use `ESC [ 6 n` to and retrieve the cursor position.
     let mut stdout = io::stdout();
     stdout.write_all(b"\x1B[6n")?;

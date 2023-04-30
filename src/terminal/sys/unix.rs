@@ -22,7 +22,7 @@ pub(crate) fn is_raw_mode_enabled() -> bool {
 }
 
 #[allow(clippy::useless_conversion)]
-pub(crate) fn size() -> Result<(u16, u16), Error> {
+pub(crate) fn size() -> Result<(usize, usize), Error> {
     // http://rosettacode.org/wiki/Terminal_control/Dimensions#Library:_BSD_libc
     let mut size = winsize {
         ws_row: 0,
@@ -43,7 +43,7 @@ pub(crate) fn size() -> Result<(u16, u16), Error> {
         && size.ws_col != 0
         && size.ws_row != 0
     {
-        return Ok((size.ws_col, size.ws_row));
+        return Ok((size.ws_col.into(), size.ws_row.into()));
     }
 
     tput_size().ok_or_else(|| std::io::Error::last_os_error().into())
@@ -163,16 +163,16 @@ fn read_supports_keyboard_enhancement_raw() -> Result<bool, Error> {
 }
 
 /// execute tput with the given argument and parse
-/// the output as a u16.
+/// the output as a usize.
 ///
 /// The arg should be "cols" or "lines"
-fn tput_value(arg: &str) -> Option<u16> {
+fn tput_value(arg: &str) -> Option<usize> {
     let output = process::Command::new("tput").arg(arg).output().ok()?;
     let value = output
         .stdout
         .into_iter()
         .filter_map(|b| char::from(b).to_digit(10))
-        .fold(0, |v, n| v * 10 + n as u16);
+        .fold(0, |v, n| v * 10 + n as usize);
 
     if value > 0 {
         Some(value)
@@ -185,7 +185,7 @@ fn tput_value(arg: &str) -> Option<u16> {
 ///
 /// This alternate way of computing the size is useful
 /// when in a subshell.
-fn tput_size() -> Option<(u16, u16)> {
+fn tput_size() -> Option<(usize, usize)> {
     match (tput_value("cols"), tput_value("lines")) {
         (Some(w), Some(h)) => Some((w, h)),
         _ => None,

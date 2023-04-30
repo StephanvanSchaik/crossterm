@@ -510,7 +510,7 @@ pub enum Event {
     Paste(String),
     /// An resize event with new dimensions after resize (columns, rows).
     /// **Note** that resize events can occur in batches.
-    Resize(u16, u16),
+    Resize(usize, usize),
 }
 
 /// Represents a mouse event.
@@ -534,9 +534,9 @@ pub struct MouseEvent {
     /// The kind of mouse event that was caused.
     pub kind: MouseEventKind,
     /// The column that the event occurred on.
-    pub column: u16,
+    pub column: usize,
     /// The row that the event occurred on.
-    pub row: u16,
+    pub row: usize,
     /// The key modifiers active when the event occurred.
     pub modifiers: KeyModifiers,
 }
@@ -932,7 +932,7 @@ pub(crate) enum InternalEvent {
     Event(Event),
     /// A cursor position (`col`, `row`).
     #[cfg(unix)]
-    CursorPosition(u16, u16),
+    CursorPosition(usize, usize),
     /// The progressive keyboard enhancement flags enabled by the terminal.
     #[cfg(unix)]
     KeyboardEnhancementFlags(KeyboardEnhancementFlags),

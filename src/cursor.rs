@@ -60,7 +60,7 @@ pub use sys::position;
 /// * Top left cell is represented as `0,0`.
 /// * Commands must be executed/queued for execution otherwise they do nothing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct MoveTo(pub u16, pub u16);
+pub struct MoveTo(pub usize, pub usize);
 
 impl Command for MoveTo {
     fn write_ansi(&self, f: &mut impl fmt::Write) -> fmt::Result {
@@ -81,7 +81,7 @@ impl Command for MoveTo {
 /// * Most terminals default 0 argument to 1.
 /// * Commands must be executed/queued for execution otherwise they do nothing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct MoveToNextLine(pub u16);
+pub struct MoveToNextLine(pub usize);
 
 impl Command for MoveToNextLine {
     fn write_ansi(&self, f: &mut impl fmt::Write) -> fmt::Result {
@@ -106,7 +106,7 @@ impl Command for MoveToNextLine {
 /// * Most terminals default 0 argument to 1.
 /// * Commands must be executed/queued for execution otherwise they do nothing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct MoveToPreviousLine(pub u16);
+pub struct MoveToPreviousLine(pub usize);
 
 impl Command for MoveToPreviousLine {
     fn write_ansi(&self, f: &mut impl fmt::Write) -> fmt::Result {
@@ -129,7 +129,7 @@ impl Command for MoveToPreviousLine {
 /// * This command is 0 based, meaning 0 is the leftmost column.
 /// * Commands must be executed/queued for execution otherwise they do nothing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct MoveToColumn(pub u16);
+pub struct MoveToColumn(pub usize);
 
 impl Command for MoveToColumn {
     fn write_ansi(&self, f: &mut impl fmt::Write) -> fmt::Result {
@@ -149,7 +149,7 @@ impl Command for MoveToColumn {
 /// * This command is 0 based, meaning 0 is the topmost row.
 /// * Commands must be executed/queued for execution otherwise they do nothing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct MoveToRow(pub u16);
+pub struct MoveToRow(pub usize);
 
 impl Command for MoveToRow {
     fn write_ansi(&self, f: &mut impl fmt::Write) -> fmt::Result {
@@ -170,7 +170,7 @@ impl Command for MoveToRow {
 /// * Most terminals default 0 argument to 1.
 /// * Commands must be executed/queued for execution otherwise they do nothing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct MoveUp(pub u16);
+pub struct MoveUp(pub usize);
 
 impl Command for MoveUp {
     fn write_ansi(&self, f: &mut impl fmt::Write) -> fmt::Result {
@@ -191,7 +191,7 @@ impl Command for MoveUp {
 /// * Most terminals default 0 argument to 1.
 /// * Commands must be executed/queued for execution otherwise they do nothing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct MoveRight(pub u16);
+pub struct MoveRight(pub usize);
 
 impl Command for MoveRight {
     fn write_ansi(&self, f: &mut impl fmt::Write) -> fmt::Result {
@@ -212,7 +212,7 @@ impl Command for MoveRight {
 /// * Most terminals default 0 argument to 1.
 /// * Commands must be executed/queued for execution otherwise they do nothing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct MoveDown(pub u16);
+pub struct MoveDown(pub usize);
 
 impl Command for MoveDown {
     fn write_ansi(&self, f: &mut impl fmt::Write) -> fmt::Result {
@@ -233,7 +233,7 @@ impl Command for MoveDown {
 /// * Most terminals default 0 argument to 1.
 /// * Commands must be executed/queued for execution otherwise they do nothing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct MoveLeft(pub u16);
+pub struct MoveLeft(pub usize);
 
 impl Command for MoveLeft {
     fn write_ansi(&self, f: &mut impl fmt::Write) -> fmt::Result {

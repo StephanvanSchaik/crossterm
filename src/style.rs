@@ -162,7 +162,7 @@ pub fn style<D: Display>(val: D) -> StyledContent<D> {
 /// # Notes
 ///
 /// This does not always provide a good result.
-pub fn available_color_count() -> u16 {
+pub fn available_color_count() -> usize {
     env::var("TERM")
         .map(|x| if x.contains("256color") { 256 } else { 8 })
         .unwrap_or(8)
