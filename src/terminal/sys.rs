@@ -13,6 +13,10 @@ pub(crate) use self::windows::{
     clear, disable_raw_mode, enable_raw_mode, is_raw_mode_enabled, scroll_down, scroll_up,
     set_size, set_window_title, size,
 };
+#[cfg(target_os = "uefi")]
+pub(crate) use self::uefi::{
+    disable_raw_mode, enable_raw_mode, is_raw_mode_enabled, size,
+};
 
 #[cfg(windows)]
 mod windows;
@@ -21,3 +25,5 @@ mod windows;
 pub mod file_descriptor;
 #[cfg(unix)]
 mod unix;
+#[cfg(target_os = "uefi")]
+mod uefi;

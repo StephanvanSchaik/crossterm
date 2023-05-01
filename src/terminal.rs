@@ -110,7 +110,7 @@ pub fn is_raw_mode_enabled() -> Result<bool, Error> {
         Ok(sys::is_raw_mode_enabled())
     }
 
-    #[cfg(windows)]
+    #[cfg(any(windows, target_os = "uefi"))]
     {
         sys::is_raw_mode_enabled()
     }
